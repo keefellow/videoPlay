@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Randomized MP4 Video Player with ID Input</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: #000;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        #startScreen, #videoScreen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+        }
+        #videoScreen {
+            display: none;
+        }
+        #videoContainer {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+        #videoPlayer {
+            width: 100%;
+            height: 100%;
+        }
+        #videoNumber {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 24px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+        input, button {
+            margin: 10px;
+            padding: 10px;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div id="startScreen">
+        <h1>Enter ID Number</h1>
+        <input type="text" id="idInput" placeholder="Enter ID">
+        <button id="submitButton">Start Playlist</button>
+    </div>
+    <div id="videoScreen">
+        <div id="videoContainer">
+            <video id="videoPlayer">
+                Your browser does not support the video tag or MP4 format.
+            </video>
+            <div id="videoNumber"></div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const startScreen = document.getElementById('startScreen');
+            const videoScreen = document.getElementById('videoScreen');
+            const idInput = document.getElementById('idInput');
+            const submitButton = document.getElementById('submitButton');
+            const video = document.getElementById('videoPlayer');
+            const videoNumber = document.getElementById('videoNumber');
+            
+            let idNumber = '';
+            const originalPlaylist = [
+                'video1.mp4',
+                'video2.mp4',
+                'video3.mp4',
+                // Add more MP4 filenames as needed
+            ];
+            let currentPlaylist = [];
+            let currentIndex = 0;
+            let playedSequence = [];
+
+            function shuffleArray(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+            }
+
+            function initializePlaylist() {
+                currentPlaylist = [...originalPlaylist];
+                shuffleArray(currentPlaylist);
+                currentIndex = 0;
+                playedSequence = [];
+            }
+
+            function loadVideo() {
+                if (currentIndex < currentPlaylist.length) {
+                    video.src = currentPlaylist[currentIndex];
+                    videoNumber.textContent = `${currentIndex + 1}/${currentPlaylist.length}`;
+                    playedSequence.push(currentPlaylist[currentIndex]);
+                    video.play().catch(e => console.error('Error playing video:', e));
+                } else {
+                    console.log('Playlist ended');
+                    generateTextFile();
+                    startScreen.style.display = 'flex';
+                    videoScreen.style.display = 'none';
+                }
+            }
+
+            function generateTextFile() {
+                const sequenceText = playedSequence.join('\n');
+                const blob = new Blob([sequenceText], { type: 'text/plain' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = `Participant_${idNumber}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            }
+
+            video.addEventListener('ended', function() {
+                currentIndex++;
+                loadVideo();
+            });
+
+            submitButton.addEventListener('click', function() {
+                idNumber = idInput.value.trim();
+                if (idNumber) {
+                    initializePlaylist();
+                    startScreen.style.display = 'none';
+                    videoScreen.style.display = 'flex';
+                    loadVideo();
+                } else {
+                    alert('Please enter an ID number');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
